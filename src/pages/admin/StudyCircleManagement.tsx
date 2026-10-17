@@ -147,13 +147,17 @@ export default function StudyCircleManagement() {
       if (existingRoleError) throw existingRoleError;
       const keepRoleIds = value.roles.map((r) => r.id);
       const rolesToDelete = (existingRoles ?? []).map((r) => r.id).filter((rid) => !keepRoleIds.includes(rid));
-      if (rolesToDelete.length) await supabase.from("study_circle_roles").delete().in("id", rolesToDelete);
+      if (rolesToDelete.length) {
+        const { error: deleteRolesError } = await supabase.from("study_circle_roles").delete().in("id", rolesToDelete);
+        if (deleteRolesError) throw deleteRolesError;
+      }
       if (value.roles.length) {
         const { error } = await supabase.from("study_circle_roles").upsert(value.roles.map((r, i) => ({ id: r.id, session_id: id, role_name: r.role_name.trim() || "Untitled role", display_order: i + 1 })));
         if (error) throw error;
       }
       for (const role of value.roles) {
-        await supabase.from("study_circle_role_performers").delete().eq("role_id", role.id);
+        const { error: deleteRolePerformersError } = await supabase.from("study_circle_role_performers").delete().eq("role_id", role.id);
+        if (deleteRolePerformersError) throw deleteRolePerformersError;
         const performers = role.performers.filter((p) => p.displayName.trim()).map((p, i) => ({ role_id: role.id, member_id: p.memberId, guest_name: p.guestName?.trim() || p.displayName.trim(), display_order: i + 1 }));
         if (performers.length) {
           const { error } = await supabase.from("study_circle_role_performers").insert(performers);
@@ -165,13 +169,17 @@ export default function StudyCircleManagement() {
       if (existingPartError) throw existingPartError;
       const keepPartIds = value.parts.map((p) => p.id);
       const partsToDelete = (existingParts ?? []).map((p) => p.id).filter((pid) => !keepPartIds.includes(pid));
-      if (partsToDelete.length) await supabase.from("study_circle_parts").delete().in("id", partsToDelete);
+      if (partsToDelete.length) {
+        const { error: deletePartsError } = await supabase.from("study_circle_parts").delete().in("id", partsToDelete);
+        if (deletePartsError) throw deletePartsError;
+      }
       if (value.parts.length) {
         const { error } = await supabase.from("study_circle_parts").upsert(value.parts.map((p, i) => ({ id: p.id, session_id: id, part_number: p.part_number, part_type: p.part_type, description: p.description, display_order: i + 1 })));
         if (error) throw error;
       }
       for (const part of value.parts) {
-        await supabase.from("study_circle_part_performers").delete().eq("part_id", part.id);
+        const { error: deletePartPerformersError } = await supabase.from("study_circle_part_performers").delete().eq("part_id", part.id);
+        if (deletePartPerformersError) throw deletePartPerformersError;
         const performers = part.performers.filter((p) => p.displayName.trim()).map((p, i) => ({ part_id: part.id, member_id: p.memberId, guest_name: p.guestName?.trim() || p.displayName.trim(), display_order: i + 1 }));
         if (performers.length) {
           const { error } = await supabase.from("study_circle_part_performers").insert(performers);
